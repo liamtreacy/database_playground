@@ -60,6 +60,7 @@ if __name__ == '__main__':
     populate_tables(conn, 10000000)
     close_db_connection(conn)
     print_file_size(db_loc)
+    # create foriegn key relationship to have a better example of 'real world'
     # create programs to do lots of transactions on db
     # then measure size
     # do a vacuum and then remeasure size
