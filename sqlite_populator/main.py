@@ -45,8 +45,21 @@ def populate_tables(conn, noOfEntries):
     conn.commit()
 
 
+def close_db_connection(conn):
+    conn.close()
+
+
+def print_file_size(db_loc):
+    print('File size is: ' + str(os.path.getsize(db_loc)/1000000) + ' mb')
+
+
 if __name__ == '__main__':
     db_loc = os.getcwd() + r"/database/demo.db"
     conn = create_connection(db_loc)
     create_tables(conn)
-    populate_tables(conn, 10)
+    populate_tables(conn, 10000000)
+    close_db_connection(conn)
+    print_file_size(db_loc)
+    # create programs to do lots of transactions on db
+    # then measure size
+    # do a vacuum and then remeasure size
