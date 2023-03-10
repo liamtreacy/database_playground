@@ -33,7 +33,7 @@ def create_tables(conn):
 
 def populate_tables(conn, noOfEntries):
     student_names = ["Jane", "Peter", "Aisling", "Stan", "Trista"]
-    laptop_names = ["abcedf", "hijk", "lmno", "pqr", "tuv"]
+    laptop_names = ["acer", "hp", "lenovo", "dell", "mac"]
 
     for i in range(noOfEntries):
         conn.execute(f'''
@@ -54,8 +54,6 @@ def populate_tables(conn, noOfEntries):
                         ('{i}')
                   ''')
 
-
-
     conn.commit()
 
 
@@ -67,15 +65,108 @@ def print_file_size(db_loc):
     print('File size is: ' + str(os.path.getsize(db_loc)/1000000) + ' mb')
 
 
-if __name__ == '__main__':
-    db_loc = os.getcwd() + r"/database/demo.db"
+def create_and_populate_db(db_loc, noOfEntriesPerTable):
     conn = create_connection(db_loc)
     create_tables(conn)
-    #populate_tables(conn, 10000000)
-    populate_tables(conn, 10)
+    populate_tables(conn, noOfEntriesPerTable)
+    return conn
+
+
+def update_macs(conn):
+    conn.execute('''
+        UPDATE laptops
+        SET laptop_name = 'macOS'
+        WHERE laptop_name = 'mac';
+        ''')
+    conn.commit()
+
+
+def update_aisling(conn):
+    conn.execute('''
+        UPDATE students
+        SET student_name = 'aishling'
+        WHERE student_name = 'aishling';
+        ''')
+    conn.commit()
+
+
+
+def delete_some_students(conn):
+    conn.execute('''
+        DELETE FROM students
+        WHERE student_name = 'aishling';
+        ''')
+    conn.commit()
+
+
+
+def delete_chargers(conn):
+    conn.execute('''
+        DELETE FROM chargers
+        ''')
+    conn.commit()
+
+
+def delete_laptops(conn):
+    conn.execute('''
+        DELETE FROM laptops
+        ''')
+    conn.commit()
+
+
+def vacuum(conn):
+    conn.execute('''
+        VACUUM;
+    ''')
+    conn.commit()
+
+
+if __name__ == '__main__':
+    db_loc = os.getcwd() + r"/database/demo.db"
+    conn = create_and_populate_db(db_loc, 10000000)
     close_db_connection(conn)
+    print("#####\nDatabase file created\n")
     print_file_size(db_loc)
-    # create foriegn key relationship to have a better example of 'real world'
-    # create programs to do lots of transactions on db
-    # then measure size
-    # do a vacuum and then remeasure size
+    print("#####\n")
+
+
+    print("\nUpdating Macs...\n")
+    conn = create_connection(db_loc)
+    update_macs(conn)
+    close_db_connection(conn)
+
+    print("\nUpdating Student names...\n")
+    conn = create_connection(db_loc)
+    update_aisling(conn)
+    close_db_connection(conn)
+
+    print_file_size(db_loc)
+    print("#####\n")
+
+    print("\nDeleting students")
+    conn = create_connection(db_loc)
+    delete_some_students(conn)
+    close_db_connection(conn)
+
+    print("\nDelete all chargers")
+    conn = create_connection(db_loc)
+    delete_chargers(conn)
+    close_db_connection(conn)
+
+    print("\nDelete all chargers")
+    conn = create_connection(db_loc)
+    delete_laptops(conn)
+    close_db_connection(conn)
+
+    print("\nPRE-VACUUM SIZE")
+    print_file_size(db_loc)
+    print("#####\n")
+
+    conn = create_connection(db_loc)
+    vacuum(conn)
+    close_db_connection(conn)
+
+    print("\nPOST-VACUUM SIZE")
+    print_file_size(db_loc)
+    print("#####\n")
+
