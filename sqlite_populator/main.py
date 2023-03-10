@@ -4,21 +4,49 @@ from sqlite3 import Error
 
 
 def create_connection(db_file):
-    """ create a database connection to a SQLite database """
     conn = None
     try:
-        print(db_file)
         conn = sqlite3.connect(db_file)
-
-        print(sqlite3.version)
+        return conn
     except Error as e:
         print(e)
-    finally:
-        if conn:
-            conn.close()
+
+
+def create_tables(conn):
+    conn.execute('''
+              CREATE TABLE IF NOT EXISTS students
+              ([student_id] INTEGER PRIMARY KEY AUTOINCREMENT, [student_name] TEXT)
+              ''')
+
+    conn.execute('''
+              CREATE TABLE IF NOT EXISTS laptops
+              ([student_id] INTEGER PRIMARY KEY AUTOINCREMENT, [laptop_name] TEXT)
+              ''')
+
+    conn.commit()
+
+def populate_tables(conn, noOfEntries):
+    student_names = ["Jane", "Peter", "Aisling", "Stan", "Trista"]
+    laptop_names = ["abcedf", "hijk", "lmno", "pqr", "tuv"]
+
+    for i in range(noOfEntries):
+        conn.execute(f'''
+                  INSERT INTO students (student_name)
+                        VALUES
+                        ('{student_names[i%5]}')
+                  ''')
+
+        conn.execute(f'''
+                  INSERT INTO laptops (laptop_name)
+                        VALUES
+                        ('{laptop_names[i%5]}')
+                  ''')
+
+    conn.commit()
 
 
 if __name__ == '__main__':
-    db_loc = os. getcwd() + r"/database/demo.db"
-    create_connection(db_loc)
-
+    db_loc = os.getcwd() + r"/database/demo.db"
+    conn = create_connection(db_loc)
+    create_tables(conn)
+    populate_tables(conn, 10)
