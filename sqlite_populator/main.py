@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import time
 from sqlite3 import Error
 
 
@@ -106,9 +107,10 @@ def delete_chargers(conn):
     conn.commit()
 
 
-def delete_laptops(conn):
+def delete_some_laptops(conn):
     conn.execute('''
         DELETE FROM laptops
+        WHERE laptop_name LIKE 'm%'
         ''')
     conn.commit()
 
@@ -129,7 +131,8 @@ def create_clean_db(db_loc):
     print("#####\n")
 
 
-def perform_updates_on_laptops(laptop_renames, db_loc):
+def perform_updates_on_laptops(db_loc):
+    laptop_renames = [('mac', 'macOS'), ('hp', 'HP'), ('lenovo', 'IBM'), ('dell', 'DELL'), ('acer', 'ACER')]
     conn = create_connection(db_loc)
     for rename in laptop_renames:
         update_laptop(conn, rename[0], rename[1])
@@ -145,14 +148,38 @@ def perform_updates_on_student_names(db_loc):
 
 
 
+def do_some_queries(db_loc, stage):
+    conn = create_connection(db_loc)
+    start_time = time.time()
+
+    conn.execute('''
+        SELECT * FROM students
+        ''')
+    conn.commit()
+
+    conn.execute(f'''
+        SELECT student_name FROM students
+        WHERE student_name LIKE 'a%'
+        ''')
+    conn.commit()
+
+    conn.execute(f'''
+        SELECT * FROM laptops
+        WHERE laptop_name LIKE 'D%'
+        ''')
+    conn.commit()
+
+    time_taken = time.time() - start_time
+    print(f'\nTime taken for queries {stage} VACUUM: {time_taken} seconds')
+    close_db_connection(conn)
+
+
 if __name__ == '__main__':
     db_loc = os.getcwd() + r"/database/demo.db"
 
     create_clean_db(db_loc)
 
-    laptop_renames = [('mac', 'macOS'), ('hp', 'HP'), ('lenovo', 'IBM'), ('dell', 'DELL'), ('acer', 'ACER')]
-
-    perform_updates_on_laptops(laptop_renames, db_loc)
+    perform_updates_on_laptops(db_loc)
 
     perform_updates_on_student_names(db_loc)
 
@@ -161,19 +188,28 @@ if __name__ == '__main__':
     close_db_connection(conn)
 
     conn = create_connection(db_loc)
-    delete_laptops(conn)
+    delete_some_laptops(conn)
     delete_chargers(conn)
     close_db_connection(conn)
 
     print("Some deletions and updates...\n\n")
+
+    do_some_queries(db_loc, 'before')
+
+
     print("#####\nPRE-VACUUM SIZE")
     print_file_size(db_loc)
     print("#####\n")
 
+    start_time = time.time()
     conn = create_connection(db_loc)
     vacuum(conn)
     close_db_connection(conn)
+    time_taken = time.time() - start_time
 
     print("#####\nPOST-VACUUM SIZE")
     print_file_size(db_loc)
+    print(f'\nTime taken for VACUUM operation: {time_taken} seconds')
     print("#####\n")
+
+    do_some_queries(db_loc, 'after')
