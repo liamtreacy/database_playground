@@ -31,21 +31,22 @@ def create_tables(conn):
 
     conn.commit()
 
+
 def populate_tables(conn, noOfEntries):
-    student_names = ["Jane", "Peter", "Aisling", "Stan", "Trista"]
+    student_names = ["Jane", "Bobby", "Aisling", "Stan", "Trista"]
     laptop_names = ["acer", "hp", "lenovo", "dell", "mac"]
 
     for i in range(noOfEntries):
         conn.execute(f'''
                   INSERT INTO students (student_name)
                         VALUES
-                        ('{student_names[i%5]}')
+                        ('{student_names[i % 5]}')
                   ''')
 
         conn.execute(f'''
                   INSERT INTO laptops (laptop_id, laptop_name)
                         VALUES
-                        ('{i}','{laptop_names[i%5]}')
+                        ('{i}','{laptop_names[i % 5]}')
                   ''')
 
         conn.execute(f'''
@@ -62,7 +63,7 @@ def close_db_connection(conn):
 
 
 def print_file_size(db_loc):
-    print('File size is: ' + str(os.path.getsize(db_loc)/1000000) + ' mb')
+    print('File size is: ' + str(os.path.getsize(db_loc) / 1000000) + ' mb')
 
 
 def create_and_populate_db(db_loc, noOfEntriesPerTable):
@@ -72,32 +73,30 @@ def create_and_populate_db(db_loc, noOfEntriesPerTable):
     return conn
 
 
-def update_macs(conn):
-    conn.execute('''
+def update_laptop(conn, current_laptop_name, new_laptop_name):
+    conn.execute(f'''
         UPDATE laptops
-        SET laptop_name = 'macOS'
-        WHERE laptop_name = 'mac';
+        SET laptop_name = '{new_laptop_name}'
+        WHERE laptop_name = '{current_laptop_name}';
         ''')
     conn.commit()
 
 
-def update_aisling(conn):
-    conn.execute('''
+def update_student(conn, current_student_name, new_student_name):
+    conn.execute(f'''
         UPDATE students
-        SET student_name = 'aishling'
-        WHERE student_name = 'aishling';
+        SET student_name = '{new_student_name}'
+        WHERE student_name = '{current_student_name}';
         ''')
     conn.commit()
 
 
-
-def delete_some_students(conn):
-    conn.execute('''
+def delete_some_students(conn, name):
+    conn.execute(f'''
         DELETE FROM students
-        WHERE student_name = 'aishling';
+        WHERE student_name = '{name}';
         ''')
     conn.commit()
-
 
 
 def delete_chargers(conn):
@@ -121,8 +120,8 @@ def vacuum(conn):
     conn.commit()
 
 
-if __name__ == '__main__':
-    db_loc = os.getcwd() + r"/database/demo.db"
+def create_clean_db(db_loc):
+    os.remove(db_loc)
     conn = create_and_populate_db(db_loc, 10000000)
     close_db_connection(conn)
     print("#####\nDatabase file created\n")
@@ -130,35 +129,44 @@ if __name__ == '__main__':
     print("#####\n")
 
 
-    print("\nUpdating Macs...\n")
+def perform_updates_on_laptops(laptop_renames, db_loc):
     conn = create_connection(db_loc)
-    update_macs(conn)
+    for rename in laptop_renames:
+        update_laptop(conn, rename[0], rename[1])
     close_db_connection(conn)
 
-    print("\nUpdating Student names...\n")
+
+
+def perform_updates_on_student_names(db_loc):
     conn = create_connection(db_loc)
-    update_aisling(conn)
+    update_student(conn, 'Aisling', 'Aishling')
+    update_student(conn, 'Bobby', 'Robert')
     close_db_connection(conn)
 
-    print_file_size(db_loc)
-    print("#####\n")
 
-    print("\nDeleting students")
+
+if __name__ == '__main__':
+    db_loc = os.getcwd() + r"/database/demo.db"
+
+    create_clean_db(db_loc)
+
+    laptop_renames = [('mac', 'macOS'), ('hp', 'HP'), ('lenovo', 'IBM'), ('dell', 'DELL'), ('acer', 'ACER')]
+
+    perform_updates_on_laptops(laptop_renames, db_loc)
+
+    perform_updates_on_student_names(db_loc)
+
     conn = create_connection(db_loc)
-    delete_some_students(conn)
+    delete_some_students(conn, 'Jane')
     close_db_connection(conn)
 
-    print("\nDelete all chargers")
     conn = create_connection(db_loc)
+    delete_laptops(conn)
     delete_chargers(conn)
     close_db_connection(conn)
 
-    print("\nDelete all chargers")
-    conn = create_connection(db_loc)
-    delete_laptops(conn)
-    close_db_connection(conn)
-
-    print("\nPRE-VACUUM SIZE")
+    print("Some deletions and updates...\n\n")
+    print("#####\nPRE-VACUUM SIZE")
     print_file_size(db_loc)
     print("#####\n")
 
@@ -166,7 +174,6 @@ if __name__ == '__main__':
     vacuum(conn)
     close_db_connection(conn)
 
-    print("\nPOST-VACUUM SIZE")
+    print("#####\nPOST-VACUUM SIZE")
     print_file_size(db_loc)
     print("#####\n")
-
